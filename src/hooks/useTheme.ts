@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback } from "react";
 export type ThemeName = "dark" | "light" | "accent" | "custom";
 
 interface ThemeColors {
+  [key: string]: string;
   background: string;
   foreground: string;
   card: string;
