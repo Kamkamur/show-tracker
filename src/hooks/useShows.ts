@@ -63,8 +63,15 @@ export function useShows() {
   }, []);
 
   const updateShow = useCallback(async (id: string, updates: Partial<Show>) => {
-    // Map app fields to DB columns
-    const dbUpdates: Record<string, unknown> = {};
+    const dbUpdates: {
+      title?: string;
+      description?: string;
+      genre?: string;
+      status?: string;
+      notes?: string;
+      favorite?: boolean;
+      rating?: number | null;
+    } = {};
     if (updates.title !== undefined) dbUpdates.title = updates.title;
     if (updates.description !== undefined) dbUpdates.description = updates.description;
     if (updates.genre !== undefined) dbUpdates.genre = updates.genre;
