@@ -62,27 +62,29 @@ const Index = () => {
     <div className="min-h-screen bg-background text-foreground">
       {/* Header */}
       <header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container mx-auto flex items-center gap-3 px-4 py-3">
+        <div className="container mx-auto flex flex-wrap items-center gap-2 px-3 py-2 sm:px-4 sm:py-3 sm:gap-3">
           <Tv className="h-5 w-5 text-primary shrink-0" />
-          <h1 className="text-lg font-bold text-foreground whitespace-nowrap">TV Tracker</h1>
-          <div className="flex-1 max-w-xs ml-auto sm:ml-4">
+          <h1 className="text-base sm:text-lg font-bold text-foreground whitespace-nowrap">TV Tracker</h1>
+          <div className="order-last w-full sm:order-none sm:w-auto sm:flex-1 sm:max-w-xs">
             <SearchBar value={search} onChange={setSearch} />
           </div>
-          <ThemeSwitcher
-            themeName={themeName}
-            currentColors={currentColors}
-            onSetTheme={setTheme}
-            onSetCustomColor={setCustomColor}
-          />
-          <Button size="sm" onClick={() => { setEditingShow(null); setAddEditOpen(true); }}>
-            <Plus className="h-4 w-4 mr-1" /> Add
-          </Button>
+          <div className="ml-auto flex items-center gap-1 sm:gap-2 sm:ml-0">
+            <ThemeSwitcher
+              themeName={themeName}
+              currentColors={currentColors}
+              onSetTheme={setTheme}
+              onSetCustomColor={setCustomColor}
+            />
+            <Button size="sm" onClick={() => { setEditingShow(null); setAddEditOpen(true); }}>
+              <Plus className="h-4 w-4 mr-1" /> Add
+            </Button>
+          </div>
         </div>
       </header>
 
       {/* Dashboard */}
       <main className="container mx-auto px-4 py-6">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
           {STATUSES.map((status) => (
             <StatusColumn
               key={status}
