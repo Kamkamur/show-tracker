@@ -14,7 +14,133 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      shared_lists: {
+        Row: {
+          created_at: string
+          id: string
+          show_ids: string[] | null
+          slug: string
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          show_ids?: string[] | null
+          slug: string
+          title?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          show_ids?: string[] | null
+          slug?: string
+          title?: string
+        }
+        Relationships: []
+      }
+      show_tags: {
+        Row: {
+          created_at: string
+          id: string
+          show_id: string
+          tag: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          show_id: string
+          tag: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          show_id?: string
+          tag?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "show_tags_show_id_fkey"
+            columns: ["show_id"]
+            isOneToOne: false
+            referencedRelation: "shows"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shows: {
+        Row: {
+          created_at: string
+          description: string | null
+          favorite: boolean
+          genre: string
+          id: string
+          notes: string | null
+          rating: number | null
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          favorite?: boolean
+          genre?: string
+          id?: string
+          notes?: string | null
+          rating?: number | null
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          favorite?: boolean
+          genre?: string
+          id?: string
+          notes?: string | null
+          rating?: number | null
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      watch_history: {
+        Row: {
+          episode: number | null
+          id: string
+          note: string | null
+          season: number | null
+          show_id: string
+          watched_at: string
+        }
+        Insert: {
+          episode?: number | null
+          id?: string
+          note?: string | null
+          season?: number | null
+          show_id: string
+          watched_at?: string
+        }
+        Update: {
+          episode?: number | null
+          id?: string
+          note?: string | null
+          season?: number | null
+          show_id?: string
+          watched_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "watch_history_show_id_fkey"
+            columns: ["show_id"]
+            isOneToOne: false
+            referencedRelation: "shows"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
