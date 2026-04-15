@@ -49,7 +49,7 @@ function hexToHsl(hex: string): string {
 
 interface Props {
   themeName: ThemeName;
-  currentColors: Record<string, string>;
+  currentColors: { [key: string]: string };
   onSetTheme: (name: ThemeName) => void;
   onSetCustomColor: (key: string, value: string) => void;
 }
