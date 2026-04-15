@@ -14,7 +14,7 @@ import { STATUS_LABELS } from "@/types/show";
 const STATUSES = Object.keys(STATUS_LABELS) as ShowStatus[];
 
 const Index = () => {
-  const { shows, addShow, updateShow, deleteShow, moveShow, toggleFavorite } = useShows();
+  const { shows, loading, addShow, updateShow, deleteShow, moveShow, toggleFavorite } = useShows();
   const { themeName, currentColors, setTheme, setCustomColor } = useTheme();
 
   const [search, setSearch] = useState("");
