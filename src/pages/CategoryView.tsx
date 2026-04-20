@@ -1,9 +1,10 @@
 import { useState, useMemo } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Navigate } from "react-router-dom";
 import { ArrowLeft, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useShows } from "@/hooks/useShows";
 import { useTheme } from "@/hooks/useTheme";
+import { useProfiles } from "@/hooks/useProfiles";
 import { ShowCard } from "@/components/ShowCard";
 import { AddEditShowDialog } from "@/components/AddEditShowDialog";
 import { NotesDialog } from "@/components/NotesDialog";
@@ -15,9 +16,11 @@ import { STATUS_LABELS } from "@/types/show";
 const STATUSES = Object.keys(STATUS_LABELS) as ShowStatus[];
 
 const CategoryView = () => {
-  const { status } = useParams<{ status: string }>();
+  const { status, profileId } = useParams<{ status: string; profileId: string }>();
   const navigate = useNavigate();
-  const { shows, addShow, updateShow, deleteShow, moveShow, toggleFavorite } = useShows();
+  const { getProfile } = useProfiles();
+  const profile = profileId ? getProfile(profileId) : undefined;
+  const { shows, addShow, updateShow, deleteShow, moveShow, toggleFavorite } = useShows(profileId);
   const { themeName, currentColors, setTheme, setCustomColor } = useTheme();
 
   const [search, setSearch] = useState("");
@@ -38,6 +41,8 @@ const CategoryView = () => {
     }
     return [...list].sort((a, b) => (b.favorite ? 1 : 0) - (a.favorite ? 1 : 0));
   }, [shows, currentStatus, search]);
+
+  if (!profile) return <Navigate to="/" replace />;
 
   const handleEdit = (show: Show) => {
     setEditingShow(show);
@@ -62,7 +67,7 @@ const CategoryView = () => {
     <div className="min-h-screen bg-background text-foreground">
       <header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container mx-auto flex flex-wrap items-center gap-2 px-3 py-2 sm:px-4 sm:py-3 sm:gap-3">
-          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => navigate("/")}>
+          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => navigate(`/profile/${profileId}`)} aria-label="Back">
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <h1 className="text-base sm:text-lg font-bold text-foreground">{STATUS_LABELS[currentStatus]}</h1>
@@ -71,6 +76,7 @@ const CategoryView = () => {
             <SearchBar value={search} onChange={setSearch} />
           </div>
           <div className="ml-auto flex items-center gap-1 sm:gap-2 sm:ml-0">
+            <span className="text-xl" title={profile.name}>{profile.emoji}</span>
             <ThemeSwitcher
               themeName={themeName}
               currentColors={currentColors}
