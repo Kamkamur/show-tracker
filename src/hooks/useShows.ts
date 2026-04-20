@@ -1,130 +1,68 @@
-import { useState, useEffect, useCallback } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { useCallback, useEffect, useState } from "react";
 import type { Show, ShowStatus } from "@/types/show";
-import { rowToShow } from "@/types/show";
-import { toast } from "sonner";
 
-export function useShows() {
-  const [shows, setShows] = useState<Show[]>([]);
-  const [loading, setLoading] = useState(true);
+const keyFor = (profileId: string) => `tv-tracker-shows:${profileId}`;
 
-  // Fetch all shows on mount
+function load(profileId: string): Show[] {
+  try {
+    const raw = localStorage.getItem(keyFor(profileId));
+    return raw ? (JSON.parse(raw) as Show[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function useShows(profileId: string | undefined) {
+  const [shows, setShows] = useState<Show[]>(() => (profileId ? load(profileId) : []));
+  const [loading, setLoading] = useState(false);
+
   useEffect(() => {
-    const fetchShows = async () => {
-      const { data, error } = await supabase
-        .from("shows")
-        .select("*")
-        .order("created_at", { ascending: true });
+    if (!profileId) return;
+    setShows(load(profileId));
+  }, [profileId]);
 
-      if (error) {
-        console.error("Failed to fetch shows:", error);
-        toast.error("Failed to load shows");
-      } else {
-        setShows((data ?? []).map(rowToShow));
-      }
-      setLoading(false);
-    };
+  useEffect(() => {
+    if (!profileId) return;
+    localStorage.setItem(keyFor(profileId), JSON.stringify(shows));
+  }, [shows, profileId]);
 
-    fetchShows();
+  const addShow = useCallback(
+    (data: Pick<Show, "title" | "description" | "genre" | "status" | "notes">) => {
+      const now = new Date().toISOString();
+      const show: Show = {
+        id: crypto.randomUUID(),
+        favorite: false,
+        rating: null,
+        createdAt: now,
+        updatedAt: now,
+        ...data,
+      };
+      setShows((prev) => [...prev, show]);
+    },
+    []
+  );
 
-    // Real-time subscription
-    const channel = supabase
-      .channel("shows-changes")
-      .on("postgres_changes", { event: "*", schema: "public", table: "shows" }, () => {
-        // Re-fetch on any change for simplicity
-        fetchShows();
-      })
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
+  const updateShow = useCallback((id: string, updates: Partial<Show>) => {
+    setShows((prev) =>
+      prev.map((s) => (s.id === id ? { ...s, ...updates, updatedAt: new Date().toISOString() } : s))
+    );
   }, []);
 
-  const addShow = useCallback(async (show: Pick<Show, "title" | "description" | "genre" | "status" | "notes">) => {
-    const { data, error } = await supabase
-      .from("shows")
-      .insert({
-        title: show.title,
-        description: show.description,
-        genre: show.genre,
-        status: show.status,
-        notes: show.notes,
-      })
-      .select()
-      .single();
-
-    if (error) {
-      console.error("Failed to add show:", error);
-      toast.error("Failed to add show");
-    } else if (data) {
-      setShows((prev) => [...prev, rowToShow(data)]);
-    }
+  const deleteShow = useCallback((id: string) => {
+    setShows((prev) => prev.filter((s) => s.id !== id));
   }, []);
 
-  const updateShow = useCallback(async (id: string, updates: Partial<Show>) => {
-    const dbUpdates: {
-      title?: string;
-      description?: string;
-      genre?: string;
-      status?: string;
-      notes?: string;
-      favorite?: boolean;
-      rating?: number | null;
-    } = {};
-    if (updates.title !== undefined) dbUpdates.title = updates.title;
-    if (updates.description !== undefined) dbUpdates.description = updates.description;
-    if (updates.genre !== undefined) dbUpdates.genre = updates.genre;
-    if (updates.status !== undefined) dbUpdates.status = updates.status;
-    if (updates.notes !== undefined) dbUpdates.notes = updates.notes;
-    if (updates.favorite !== undefined) dbUpdates.favorite = updates.favorite;
-    if (updates.rating !== undefined) dbUpdates.rating = updates.rating;
-
-    const { error } = await supabase.from("shows").update(dbUpdates).eq("id", id);
-
-    if (error) {
-      console.error("Failed to update show:", error);
-      toast.error("Failed to update show");
-    } else {
-      setShows((prev) => prev.map((s) => (s.id === id ? { ...s, ...updates } : s)));
-    }
+  const moveShow = useCallback((id: string, status: ShowStatus) => {
+    setShows((prev) =>
+      prev.map((s) => (s.id === id ? { ...s, status, updatedAt: new Date().toISOString() } : s))
+    );
   }, []);
 
-  const deleteShow = useCallback(async (id: string) => {
-    const { error } = await supabase.from("shows").delete().eq("id", id);
-
-    if (error) {
-      console.error("Failed to delete show:", error);
-      toast.error("Failed to delete show");
-    } else {
-      setShows((prev) => prev.filter((s) => s.id !== id));
-    }
+  const toggleFavorite = useCallback((id: string) => {
+    setShows((prev) =>
+      prev.map((s) => (s.id === id ? { ...s, favorite: !s.favorite } : s))
+    );
   }, []);
-
-  const moveShow = useCallback(async (id: string, status: ShowStatus) => {
-    const { error } = await supabase.from("shows").update({ status }).eq("id", id);
-
-    if (error) {
-      console.error("Failed to move show:", error);
-      toast.error("Failed to move show");
-    } else {
-      setShows((prev) => prev.map((s) => (s.id === id ? { ...s, status } : s)));
-    }
-  }, []);
-
-  const toggleFavorite = useCallback(async (id: string) => {
-    const show = shows.find((s) => s.id === id);
-    if (!show) return;
-
-    const { error } = await supabase.from("shows").update({ favorite: !show.favorite }).eq("id", id);
-
-    if (error) {
-      console.error("Failed to toggle favorite:", error);
-      toast.error("Failed to update favorite");
-    } else {
-      setShows((prev) => prev.map((s) => (s.id === id ? { ...s, favorite: !s.favorite } : s)));
-    }
-  }, [shows]);
 
   return { shows, loading, addShow, updateShow, deleteShow, moveShow, toggleFavorite };
 }
